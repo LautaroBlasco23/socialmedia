@@ -51,39 +51,41 @@ To run the app with Docker.
 
 UserAuth
 
-* id *Long*
-* email *String/Unique*
-* password *String*
-* roles *String*
-* userProfile *UserProfile/foreign_key*
-* isAccountNonExpired *boolean*
-* isAccountNonLocked *boolean*
-* isCredentialsNonExpired *boolean*
-* isEnabled *boolean*
+* **id** | Long
+* **email** | String(Unique)
+* **password** | String
+* **roles** | String
+* **userProfile** | UserProfile/foreign_key
+* **isAccountNonExpired** | boolean
+* **isAccountNonLocked** | boolean
+* **isCredentialsNonExpired** | boolean
+* **isEnabled** | boolean
 
 UserProfile
 
-* id *Long*
-* firstname *String*
-* lastname *String*
+* **id** | Long
+* **firstname** | String
+* **lastname** | String
 
 Post
 
-* id *Long*
-* userId *Long*
-* text *String*
-* listOfComments *Set<Comment>*
-* listOfLikes *Set<UserProfile>*
+* **id** | Long
+* **userId** | Long
+* **text** | String
+* **listOfComments** | Set(Comment)
+* **listOfLikes** | Set(UserProfile)
 
 Comment
 
-* id *Long*
-* userId *Long*
-* text *Long*
-* listOfReplies *Set<Comment>*
-* listOfLikes *Set<UserProfile>*
+* **id** | Long
+* **userId** | Long
+* **text** | Long
+* **listOfReplies** | Set(Comment)
+* **listOfLikes** | Set(UserProfile)
 
-# Interfaces
+# API Endpoints
+
+All under */api* path.
 
 ## Auth 
 
