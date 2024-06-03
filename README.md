@@ -7,7 +7,7 @@ like other's posts or comments.
 
 You can follow the profiles you want and see their new posts on your home page.
 
-## Technologies
+# Technologies
 
 * Java (Spring boot / Gradle)
 * PostgreSQL (user database)
@@ -15,15 +15,29 @@ You can follow the profiles you want and see their new posts on your home page.
 * Jwt and Bcrypt (user's auth)
 * React (Frontend)
 
-### Scripts
+## Scripts
 
-Inside utils folder you can run this script to start your postgresql's Docker database.
+Inside */utils* folder you can run this script to start your postgresql's Docker database.
 
-´´´
+```
 make database-up
-´´´
+```
 
-## Entities descriptions
+To run the App's backend without Docker
+
+```
+gradle bootRun
+```
+
+To run the app with Docker.
+
+```
+// TODO
+```
+
+# Entities
+
+## Entities Description
 
 **userAuth** -> responsable por la autenticación del usuario, usado por spring security.
 
@@ -33,7 +47,7 @@ make database-up
 
 **Comments** -> comentarios sobre los posteos, o sobre otros comentarios.
 
-### Entities data
+## Entities data
 
 UserAuth
 
@@ -69,9 +83,9 @@ Comment
 * listOfReplies *Set<Comment>*
 * listOfLikes *Set<UserProfile>*
 
-## Interfaces
+# Interfaces
 
-**Auth** 
+## Auth 
 
 all under */auth* path.
 
@@ -82,7 +96,7 @@ all under */auth* path.
 * **POST /refreshtoken** -> get new jwt from your jwt's refresh token.
 * **DELETE /delete/me** -> delete my auth and profile.
 
-**Profile** 
+## Profile
 
 all under */profiles* path.
 
@@ -90,7 +104,7 @@ all under */profiles* path.
 * **GET "/me"** -> Get your profile (based on your token).
 * **PUT "/modify"** -> Modify your profile (based on your token).
 
-**Post** 
+## Post
 
 all under */posts* path.
 
@@ -100,7 +114,7 @@ all under */posts* path.
 * **PUT "/{postId}"** -> Modify post.
 * **DELETE "/{postId}"** -> Delete post.
 
-**Comment** 
+## Comment
 
 all under */comments* path.
 
