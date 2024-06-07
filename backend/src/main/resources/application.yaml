@@ -1,5 +1,4 @@
 spring:
-  # PostgreSQL
   datasource:
     url: jdbc:postgresql://localhost:5432/socialmedia
     username: lauti

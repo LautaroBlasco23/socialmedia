@@ -1,15 +1,17 @@
 package socialmedia.backend.user.userProfile.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import socialmedia.backend.user.userAuth.entity.UserAuthEntity;
 import socialmedia.backend.user.userProfile.dtos.CreateProfileDTO;
 import socialmedia.backend.user.userProfile.dtos.UpdateProfileDTO;
 import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
-import socialmedia.backend.user.userProfile.exceptions.ProfileNotFoundException;
+import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
 import socialmedia.backend.user.userProfile.repository.UserProfileRepository;
 
 @Service
@@ -22,10 +24,10 @@ public class UserProfileService {
         return this.userProfileRepository.findAll();
     }
 
-    public UserProfileEntity getProfileById(Long profileId) throws ProfileNotFoundException {
+    public UserProfileEntity getProfileById(Long profileId) throws UserNotFoundException {
         Optional<UserProfileEntity> userQuery = this.userProfileRepository.findById(profileId);
-        if (!userQuery.isPresent()) {
-            throw new ProfileNotFoundException();
+        if (userQuery.isEmpty()) {
+            throw new UserNotFoundException();
         }
         return userQuery.get();
     }
@@ -41,8 +43,16 @@ public class UserProfileService {
         return newProfile;
     }
 
-    public UserProfileEntity createDefaultProfile() {
+    public UserProfileEntity createDefaultProfile(UserAuthEntity userAuth) {
+        List<Long> emptyIdsList = new ArrayList<Long>();
+        
         UserProfileEntity newProfile = UserProfileEntity.builder()
+            .auth(userAuth)
+            .following(emptyIdsList)
+            .userPosts(emptyIdsList)
+            .userComments(emptyIdsList)
+            .likedPosts(emptyIdsList)
+            .likedComments(emptyIdsList)
             .firstname("default")
             .lastname("default")
             .build();
@@ -52,11 +62,11 @@ public class UserProfileService {
         return newProfile;
     }
 
-    public UserProfileEntity modifyProfile(Long profileId, UpdateProfileDTO profileData) throws ProfileNotFoundException {
+    public UserProfileEntity modifyProfile(Long profileId, UpdateProfileDTO profileData) throws UserNotFoundException {
         Optional<UserProfileEntity> userQuery = this.userProfileRepository.findById(profileId);
 
         if (userQuery.isEmpty()) {
-            throw new ProfileNotFoundException();
+            throw new UserNotFoundException();
         }
 
         UserProfileEntity modifiedUser = userQuery.get();

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import socialmedia.backend.user.userAuth.service.UserAuthService;
+import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,17 +22,17 @@ public class JwtTokenGenerator {
     private final JwtEncoder jwtEncoder;
     private final UserAuthService userAuthService;
 
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(Authentication authentication) throws UserNotFoundException {
         String role = getRolesOfUser(authentication);
-        Long userId = this.userAuthService.getProfileIdWithEmail(authentication.getName());
+        Long userAuthId = this.userAuthService.getUserIdWithEmail(authentication.getName());
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("sv")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plus(15 , ChronoUnit.MINUTES))
-                .subject(userId.toString())
-                .claim("role", role)
-                .build();
+            .issuer("lautaro")
+            .issuedAt(Instant.now())
+            .expiresAt(Instant.now().plus(60 , ChronoUnit.MINUTES))
+            .subject(userAuthId.toString())
+            .claim("role", role)
+            .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
@@ -39,12 +40,12 @@ public class JwtTokenGenerator {
     public String generateRefreshToken(Authentication authentication) {
         
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("atquil")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plus(15 , ChronoUnit.DAYS))
-                .subject(authentication.getName())
-                .claim("scope", "REFRESH_TOKEN")
-                .build();
+            .issuer("lautaro")
+            .issuedAt(Instant.now())
+            .expiresAt(Instant.now().plus(7 , ChronoUnit.DAYS))
+            .subject(authentication.getName())
+            .claim("scope", "REFRESH_TOKEN")
+            .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }

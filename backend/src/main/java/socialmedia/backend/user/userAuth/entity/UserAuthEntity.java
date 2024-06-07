@@ -7,28 +7,23 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import socialmedia.backend.security.jwt.refreshToken.entity.RefreshTokenEntity;
-import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "user_auth")
+@Table(name = "users_auth")
 public class UserAuthEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,15 +37,6 @@ public class UserAuthEntity implements UserDetails {
 
     @Column(nullable = false, name = "roles")
     private String roles;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "fk_profile_id")
-    private UserProfileEntity userProfile;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "fk_refresh_id")
-    private RefreshTokenEntity refreshTokens;
-
 
     // Booleans needed for userDetails
     private boolean isAccountNonExpired;

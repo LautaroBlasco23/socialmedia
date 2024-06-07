@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import socialmedia.backend.security.jwt.JwtTokenUtils;
 import socialmedia.backend.user.userProfile.dtos.UpdateProfileDTO;
 import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
-import socialmedia.backend.user.userProfile.exceptions.ProfileNotFoundException;
+import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
 import socialmedia.backend.user.userProfile.service.UserProfileService;
 
 @RestController
@@ -30,12 +30,12 @@ public class UserProfileController {
     
     @GetMapping("/me")
     public ResponseEntity<?> getMyProfile(HttpServletRequest request) {
-        Long myUserId = this.jwtTokenUtils.gettingUserIdFromRequest(request);
+        Long myUserId = this.jwtTokenUtils.getUserIdFromRequest(request);
 
         UserProfileEntity myUser =  null;
         try {
             myUser = this.userProfileService.getProfileById(myUserId);
-        } catch (ProfileNotFoundException e) {
+        } catch (UserNotFoundException e) {
             return ResponseEntity.badRequest().body("invalid token!");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("something went wrong in our server. we will fix it. Please try again later...");
@@ -46,13 +46,13 @@ public class UserProfileController {
 
     @PutMapping("/modify")
     public ResponseEntity<?> modifyProfile(@RequestBody UpdateProfileDTO newData, HttpServletRequest request) {
-        Long myUserId = this.jwtTokenUtils.gettingUserIdFromRequest(request);
+        Long myUserId = this.jwtTokenUtils.getUserIdFromRequest(request);
 
         UserProfileEntity myUser =  null;
         try {
             myUser = this.userProfileService.getProfileById(myUserId);
             myUser = this.userProfileService.modifyProfile(myUserId, newData);
-        } catch (ProfileNotFoundException e) {
+        } catch (UserNotFoundException e) {
             return ResponseEntity.badRequest().body("invalid token!");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("something went wrong in our server. we will fix it. Please try again later...");

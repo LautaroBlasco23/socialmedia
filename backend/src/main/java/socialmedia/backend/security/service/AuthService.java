@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,30 +22,33 @@ import socialmedia.backend.security.jwt.JwtTokenGenerator;
 import socialmedia.backend.security.jwt.TokenType;
 import socialmedia.backend.security.jwt.refreshToken.entity.RefreshTokenEntity;
 import socialmedia.backend.security.jwt.refreshToken.repository.RefreshTokenRepository;
-import socialmedia.backend.user.userAuth.dtos.UserRegisterDTO;
+import socialmedia.backend.user.userAuth.dtos.UserAuthDTO;
 import socialmedia.backend.user.userAuth.entity.UserAuthEntity;
-import socialmedia.backend.user.userAuth.mapper.UserAuthMapper;
 import socialmedia.backend.user.userAuth.repository.UserAuthRepository;
+import socialmedia.backend.user.userAuth.service.UserAuthService;
+import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
+import socialmedia.backend.user.userProfile.service.UserProfileService;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserAuthRepository userAuthRepository;
+    private final UserAuthService userAuthService;
+    private final UserProfileService userProfileService;
     private final JwtTokenGenerator jwtTokenGenerator;
+    private final UserAuthRepository userAuthRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserAuthMapper userAuthMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthResponseDTO getJwtTokensAfterAuthentication(Authentication authentication, HttpServletResponse response) throws InvalidCredentialsException {
+    public AuthResponseDTO getJwtTokensAfterAuthentication(Authentication authentication, HttpServletResponse response) throws InvalidCredentialsException, UserNotFoundException {
         if (authentication == null) {
             throw new InvalidCredentialsException();
         }   
         
-        Optional<UserAuthEntity> userQuery = userAuthRepository.findByEmail(authentication.getName());
+        Optional<UserAuthEntity> userQuery = this.userAuthRepository.findByEmail(authentication.getName());
         if (userQuery.isEmpty()) {
             throw new InvalidCredentialsException();
         }
-
 
         if (!this.comparePasswords(userQuery.get().getPassword(), authentication.getCredentials().toString())) {
             throw new InvalidCredentialsException();
@@ -64,28 +68,29 @@ public class AuthService {
             .build();
     }
 
-    public AuthResponseDTO registerUser(UserRegisterDTO userRegisterDTO, HttpServletResponse httpServletResponse) throws EmailAlreadyInUseException {
-        Optional<UserAuthEntity> user = userAuthRepository.findByEmail(userRegisterDTO.getEmail());
-        if(user.isPresent()){
+    public AuthResponseDTO registerUser(UserAuthDTO userAuthDTO, HttpServletResponse response) throws EmailAlreadyInUseException, UserNotFoundException {
+        Optional<UserAuthEntity> userQuery = this.userAuthRepository.findByEmail(userAuthDTO.getEmail());
+        if (userQuery.isPresent()) {
             throw new EmailAlreadyInUseException();
         }
 
         // storing user's data into db.
-        UserAuthEntity userAuthEntity = userAuthMapper.convertToEntity(userRegisterDTO);
-        UserAuthEntity savedUserAuth = userAuthRepository.save(userAuthEntity);
-        
+        userAuthDTO.setPassword(this.passwordEncoder.encode(userAuthDTO.getPassword()));
+        UserAuthEntity newUserAuth = this.userAuthService.createUserAuthEntity(userAuthDTO);
+        this.userProfileService.createDefaultProfile(newUserAuth);
+
         // Generating JWT token
-        Authentication authentication = createAuthenticationObject(userAuthEntity);
+        Authentication authentication = createAuthenticationObject(newUserAuth);
         String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
         String refreshToken = jwtTokenGenerator.generateRefreshToken(authentication);
 
-        saveUserRefreshToken(userAuthEntity, refreshToken);
-        creatRefreshTokenCookie(httpServletResponse,refreshToken);
+        saveUserRefreshToken(newUserAuth, refreshToken);
+        creatRefreshTokenCookie(response,refreshToken);
         
         return AuthResponseDTO.builder()
             .accessToken(accessToken)
             .accessTokenExpiry(5 * 60)
-            .userId(savedUserAuth.getId())
+            .userId(newUserAuth.getId())
             .tokenType(TokenType.Bearer)
             .build();
     }
@@ -108,7 +113,7 @@ public class AuthService {
         return refreshTokenCookie;
     }
 
-    public Object getAccessTokenUsingRefreshToken(String authorizationHeader) {
+    public Object getAccessTokenUsingRefreshToken(String authorizationHeader) throws UserNotFoundException {
  
         if(!authorizationHeader.startsWith(TokenType.Bearer.name())){
             return new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Please verify your token type");

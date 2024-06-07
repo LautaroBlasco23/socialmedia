@@ -19,7 +19,7 @@ import socialmedia.backend.user.userAuth.entity.UserAuthEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="REFRESH_TOKENS")
+@Table(name="refresh_tokens")
 public class RefreshTokenEntity {
 
     @Id
@@ -27,7 +27,6 @@ public class RefreshTokenEntity {
     @Column(name = "id")
     private Long id;
 
-    // Increase the length to a value that can accommodate your actual token lengths
     @Column(name = "REFRESH_TOKEN", nullable = false, length = 10000)
     private String refreshToken;
 

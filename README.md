@@ -122,5 +122,7 @@ all under */comments* path.
 
 * **GET "/post/{postId}"** -> Get all comments from post.
 * **GET "/user/{userId}"** -> Get all comments from specific user.
+* **POST "/post/{postId}"** -> Create a comment into a post.
+* **POST "/post/{postId}/comment/{commentId}"** -> Create a
 * **PUT "/modify/{commentId}"** -> Modify Comment.
 * **DELETE "/delete/{commentId}"** -> Delete comment.

@@ -70,7 +70,7 @@ public class JwtTokenUtils {
         return decodedToken;
     }
 
-    public Long gettingUserIdFromRequest(HttpServletRequest request) throws InvalidBearerTokenException {
+    public Long getUserIdFromRequest(HttpServletRequest request) throws InvalidBearerTokenException {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
