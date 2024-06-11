@@ -3,6 +3,6 @@ package socialmedia.backend.posts.dtos;
 import lombok.Data;
 
 @Data
-public class PostDataDTO {
+public class CreatePostDTO {
     private String text;
 }

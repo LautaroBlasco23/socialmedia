@@ -1,6 +1,5 @@
 package socialmedia.backend.user.userProfile.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,15 +43,13 @@ public class UserProfileService {
     }
 
     public UserProfileEntity createDefaultProfile(UserAuthEntity userAuth) {
-        List<Long> emptyIdsList = new ArrayList<Long>();
-        
         UserProfileEntity newProfile = UserProfileEntity.builder()
             .auth(userAuth)
-            .following(emptyIdsList)
-            .userPosts(emptyIdsList)
-            .userComments(emptyIdsList)
-            .likedPosts(emptyIdsList)
-            .likedComments(emptyIdsList)
+            .following(null)
+            .userPosts(null)
+            .userComments(null)
+            .likedPosts(null)
+            .likedComments(null)
             .firstname("default")
             .lastname("default")
             .build();

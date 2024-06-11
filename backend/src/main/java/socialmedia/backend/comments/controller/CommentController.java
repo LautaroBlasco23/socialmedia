@@ -16,11 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import socialmedia.backend.comments.dtos.CommentReturnDTO;
 import socialmedia.backend.comments.dtos.NewCommentDTO;
 import socialmedia.backend.comments.entity.CommentEntity;
 import socialmedia.backend.comments.exceptions.CommentNotFound;
 import socialmedia.backend.comments.exceptions.InvalidComment;
 import socialmedia.backend.comments.exceptions.UnAuthorizedEditor;
+import socialmedia.backend.comments.mapper.CommentMapper;
 import socialmedia.backend.comments.service.CommentService;
 import socialmedia.backend.posts.exceptions.PostNotFound;
 import socialmedia.backend.security.jwt.JwtTokenUtils;
@@ -29,6 +32,7 @@ import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
 @RestController
 @RequestMapping("/api/comments")
 @RequiredArgsConstructor
+@Slf4j
 public class CommentController {
 
     private final CommentService commentService;
@@ -70,10 +74,9 @@ public class CommentController {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
             String commentText = commentData.getText();
-
             CommentEntity newComment = this.commentService.createComment(commentText, userId, postId);
-
-            return ResponseEntity.ok(newComment);
+            CommentReturnDTO commentToReturn = CommentMapper.fromEntityToDTO(newComment);
+            return ResponseEntity.ok(commentToReturn);
         } catch (PostNotFound e) {
             return ResponseEntity.badRequest().body("post not found");
         } catch (UsernameNotFoundException e) {
@@ -81,7 +84,8 @@ public class CommentController {
         } catch (InvalidComment e) {
             return ResponseEntity.badRequest().body("please insert a valid text");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("something went wrong in our server, we'll solve it as soon as possible");
+            log.info(e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 

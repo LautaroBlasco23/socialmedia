@@ -53,7 +53,7 @@ public class CommentService {
 
     public CommentEntity createComment(String commentText, Long userId, Long postId) throws InvalidComment, PostNotFound, UserNotFoundException {
         
-        if (commentText == null || commentText.length() == 0) {
+        if (commentText == null || commentText.isEmpty()) {
             throw new InvalidComment();
         }
 
@@ -63,11 +63,11 @@ public class CommentService {
             .post(post)
             .user(user)
             .text(commentText)
-            .likes(new HashSet<Long>())
+            .replies(new HashSet<>())
+            .likes(new HashSet<>())
             .build();
         
-        this.commentRepository.save(newComment);
-        this.postService.addCommentToPost(postId, newComment);
+        newComment = this.commentRepository.save(newComment);
 
         return newComment;
     }
@@ -86,10 +86,10 @@ public class CommentService {
             .post(post)
             .user(user)
             .text(commentText)
-            .likes(new HashSet<Long>())
+            .likes(new HashSet<>())
             .build();
         
-        commentToReply.getReplies().add(newComment.getId());
+        commentToReply.getReplies().add(newComment);
         this.commentRepository.save(newComment);
         this.commentRepository.save(commentToReply);
 
@@ -114,14 +114,16 @@ public class CommentService {
 
     public CommentEntity likeComment(NewCommentDTO newComment, Long commentId, Long userId) throws CommentNotFound, UserNotFoundException {
         CommentEntity comment = this.getCommentById(commentId);
-        comment.getLikes().add(userId);
+        UserProfileEntity user = this.userProfileService.getProfileById(userId);
+        comment.getLikes().add(user);
         this.commentRepository.save(comment);
         return comment;
     }
 
     public CommentEntity unLikeComment(NewCommentDTO newComment, Long commentId, Long userId) throws CommentNotFound, UserNotFoundException {
         CommentEntity comment = this.getCommentById(commentId);
-        comment.getLikes().remove(userId);
+        UserProfileEntity user = this.userProfileService.getProfileById(userId);
+        comment.getLikes().remove(user);
         this.commentRepository.save(comment);
         return comment;
     }

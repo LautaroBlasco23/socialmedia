@@ -15,10 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import socialmedia.backend.posts.dtos.PostDataDTO;
+import socialmedia.backend.posts.dtos.CreatePostDTO;
+import socialmedia.backend.posts.dtos.PostReturnDTO;
 import socialmedia.backend.posts.entity.PostEntity;
 import socialmedia.backend.posts.exceptions.PostNotFound;
+import socialmedia.backend.posts.mapper.PostMapper;
 import socialmedia.backend.posts.service.PostService;
 import socialmedia.backend.security.jwt.JwtTokenUtils;
 import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
@@ -26,7 +27,6 @@ import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
-@Slf4j
 public class PostController {
 
     private final PostService postService;
@@ -40,9 +40,14 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<?> getSpecificPost(@PathVariable Long postId) {
         try {
-            return ResponseEntity.ok(this.postService.getPostById(postId));
+            PostEntity postEntity = this.postService.getPostById(postId);
+            PostReturnDTO postReturn = PostMapper.FromEntityToDTO(postEntity);
+
+            return ResponseEntity.ok(postReturn);
         } catch (PostNotFound e) {
-            return ResponseEntity.badRequest().body("post not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("post not found");
+        } catch (Exception e ) {
+            return ResponseEntity.badRequest().body("internal server error");
         }
     }
 
@@ -53,20 +58,18 @@ public class PostController {
             List<PostEntity> listOfPosts = this.postService.getAlllUserPosts(userId);
             return ResponseEntity.ok(listOfPosts);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.badRequest().body("user not found");
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createPost(@RequestBody PostDataDTO postData, HttpServletRequest request) {
+    public ResponseEntity<?> createPost(@RequestBody CreatePostDTO postData, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
-            log.info("userId: " + userId);
             PostEntity newPost = this.postService.createNewPost(postData, userId);
-            log.info("newPost: " + newPost.toString());
             return ResponseEntity.ok(newPost);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.badRequest().body("invalid user");
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -79,12 +82,12 @@ public class PostController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.badRequest().body("invalid token, user not found");
         } catch (PostNotFound e) {
-            return ResponseEntity.badRequest().body("post not found");
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PutMapping("/modify/{postId}")
-    public ResponseEntity<?> modifyPost(@PathVariable Long postId, @RequestBody PostDataDTO postData, HttpServletRequest request) {
+    public ResponseEntity<?> modifyPost(@PathVariable Long postId, @RequestBody CreatePostDTO postData, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
             PostEntity post = this.postService.getPostById(postId);
@@ -94,7 +97,7 @@ public class PostController {
             PostEntity modifiedPost = this.postService.modifyTextInPost(postId, postData);
             return ResponseEntity.ok(modifiedPost);
         } catch (PostNotFound e) {
-            return ResponseEntity.badRequest().body("post not found");
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -110,7 +113,7 @@ public class PostController {
             PostEntity modifiedPost = this.postService.deletePost(postId);
             return ResponseEntity.ok(modifiedPost);
         } catch (PostNotFound e) {
-            return ResponseEntity.badRequest().body("post not found");
+            return ResponseEntity.notFound().build();
         }
     }
 }

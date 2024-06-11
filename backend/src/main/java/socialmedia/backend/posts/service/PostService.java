@@ -7,9 +7,7 @@ import java.util.Optional;
 import java.util.HashSet;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import socialmedia.backend.comments.entity.CommentEntity;
-import socialmedia.backend.posts.dtos.PostDataDTO;
+import socialmedia.backend.posts.dtos.CreatePostDTO;
 import socialmedia.backend.posts.entity.PostEntity;
 import socialmedia.backend.posts.exceptions.PostNotFound;
 import socialmedia.backend.posts.repository.PostRepository;
@@ -19,7 +17,6 @@ import socialmedia.backend.user.userProfile.service.UserProfileService;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PostService {
     
     private final PostRepository postRepository;
@@ -44,21 +41,20 @@ public class PostService {
         return postQuery.get();
     }
 
-    public PostEntity createNewPost(PostDataDTO postData, Long userId) throws UserNotFoundException {
+    public PostEntity createNewPost(CreatePostDTO postData, Long userId) throws UserNotFoundException {
         UserProfileEntity user = this.userProfileService.getProfileById(userId);
-        log.info("user: " + user.toString());
         PostEntity newPost = PostEntity.builder()
             .user(user)
             .text(postData.getText())
             .listOfComments(new HashSet<>())
-            .likes(new HashSet<>())
+            .usersThatLiked(new HashSet<>())
             .build();
-
-        this.postRepository.save(newPost);
+            
+        newPost = this.postRepository.save(newPost);
         return newPost;
     }
 
-    public PostEntity modifyTextInPost(Long postId, PostDataDTO postData) throws PostNotFound {
+    public PostEntity modifyTextInPost(Long postId, CreatePostDTO postData) throws PostNotFound {
         Optional<PostEntity> postQuery = this.postRepository.findById(postId);
         if (postQuery.isEmpty()) {
             throw new PostNotFound();
@@ -75,27 +71,16 @@ public class PostService {
             throw new PostNotFound();
         }
         PostEntity postToModify = postQuery.get();
+        UserProfileEntity user = this.userProfileService.getProfileById(userId);
 
         // if user already liked the comment, the app will remove user's like.
-        if (postToModify.getLikes().contains(userId)) {
-            postToModify.getLikes().remove(userId);
+        if (postToModify.getUsersThatLiked().contains(user)) {
+            postToModify.getUsersThatLiked().remove(user);
         } else {
-            postToModify.getLikes().add(userId);
+            postToModify.getUsersThatLiked().add(user);
         }
 
         this.postRepository.save(postToModify);
-        return postToModify;
-    }
-
-    public PostEntity addCommentToPost(Long postId, CommentEntity newComment) throws PostNotFound {
-        Optional<PostEntity> postQuery = this.postRepository.findById(postId);
-        if (postQuery.isEmpty()) {
-            throw new PostNotFound();
-        }
-        PostEntity postToModify = postQuery.get();
-        postToModify.getListOfComments().add(newComment);
-        this.postRepository.save(postToModify);
-
         return postToModify;
     }
 
