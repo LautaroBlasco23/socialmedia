@@ -4,45 +4,70 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import lombok.RequiredArgsConstructor;
 import socialmedia.backend.posts.dtos.CreatePostDTO;
+import socialmedia.backend.posts.dtos.PostReturnDTO;
 import socialmedia.backend.posts.entity.PostEntity;
 import socialmedia.backend.posts.exceptions.PostNotFound;
+import socialmedia.backend.posts.mapper.PostMapper;
 import socialmedia.backend.posts.repository.PostRepository;
 import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
 import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
-import socialmedia.backend.user.userProfile.service.UserProfileService;
+import socialmedia.backend.user.userProfile.repository.UserProfileRepository;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
     
     private final PostRepository postRepository;
-    private final UserProfileService userProfileService;
+    private final UserProfileRepository userProfileRepository;
 
-    public List<PostEntity> getAllPosts() {
+    public List<PostReturnDTO> getAllPosts() {
         List<PostEntity> listOfPosts = this.postRepository.findAll();
-        return listOfPosts;
+        
+        List<PostReturnDTO> listToReturn = new ArrayList<>();
+        for (PostEntity post: listOfPosts) {
+            listToReturn.add(PostMapper.FromEntityToDTO(post));
+        }
+
+        return listToReturn;
     }
 
-    public List<PostEntity> getAlllUserPosts(Long userId) throws UserNotFoundException {
-        UserProfileEntity user = this.userProfileService.getProfileById(userId);
-        List<PostEntity> listOfPosts = this.postRepository.findAllByUser(user);
-        return listOfPosts;
+    public List<PostReturnDTO> getAllUserPosts(Long userId) throws UserNotFoundException {
+        Optional<UserProfileEntity> userQuery = userProfileRepository.findById(userId);
+        if (userQuery.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        UserProfileEntity user = userQuery.get();
+        List<PostEntity> listOfPosts = postRepository.findAllByUser(user);
+
+        List<PostReturnDTO> listToReturn = new ArrayList<>();
+        for (PostEntity post: listOfPosts) {
+            listToReturn.add(PostMapper.FromEntityToDTO(post));
+        }
+
+        return listToReturn;
     }
 
-    public PostEntity getPostById(Long postId) throws PostNotFound {
-        Optional<PostEntity> postQuery = this.postRepository.findById(postId);
+    public PostReturnDTO getPostById(Long postId) throws PostNotFound {
+        Optional<PostEntity> postQuery = postRepository.findById(postId);
         if (postQuery.isEmpty()) {
             throw new PostNotFound();
         }
-        return postQuery.get();
+        return PostMapper.FromEntityToDTO(postQuery.get());
     }
 
-    public PostEntity createNewPost(CreatePostDTO postData, Long userId) throws UserNotFoundException {
-        UserProfileEntity user = this.userProfileService.getProfileById(userId);
+    public PostReturnDTO createNewPost(CreatePostDTO postData, Long userId) throws UserNotFoundException {
+        Optional<UserProfileEntity> userQuery = userProfileRepository.findById(userId);
+        if (userQuery.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+        
+        UserProfileEntity user = userQuery.get();
         PostEntity newPost = PostEntity.builder()
             .user(user)
             .text(postData.getText())
@@ -50,28 +75,35 @@ public class PostService {
             .usersThatLiked(new HashSet<>())
             .build();
             
-        newPost = this.postRepository.save(newPost);
-        return newPost;
+        newPost = postRepository.save(newPost);
+        return PostMapper.FromEntityToDTO(newPost);
     }
 
-    public PostEntity modifyTextInPost(Long postId, CreatePostDTO postData) throws PostNotFound {
-        Optional<PostEntity> postQuery = this.postRepository.findById(postId);
+    public PostReturnDTO modifyTextInPost(Long postId, CreatePostDTO postData) throws PostNotFound {
+        Optional<PostEntity> postQuery = postRepository.findById(postId);
         if (postQuery.isEmpty()) {
             throw new PostNotFound();
         }
+
         PostEntity postToModify = postQuery.get();
         postToModify.setText(postData.getText());
-        this.postRepository.save(postToModify);
-        return postToModify;
+        
+        postRepository.save(postToModify);
+        return PostMapper.FromEntityToDTO(postToModify);
     }
 
-    public PostEntity likePost(Long postId, Long userId) throws PostNotFound, UserNotFoundException {
-        Optional<PostEntity> postQuery = this.postRepository.findById(postId);
+    public PostReturnDTO likePost(Long postId, Long userId) throws PostNotFound, UserNotFoundException {
+        Optional<PostEntity> postQuery = postRepository.findById(postId);
         if (postQuery.isEmpty()) {
             throw new PostNotFound();
         }
+        Optional<UserProfileEntity> userQuery = userProfileRepository.findById(userId);
+        if (userQuery.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
         PostEntity postToModify = postQuery.get();
-        UserProfileEntity user = this.userProfileService.getProfileById(userId);
+        UserProfileEntity user = userQuery.get();
 
         // if user already liked the comment, the app will remove user's like.
         if (postToModify.getUsersThatLiked().contains(user)) {
@@ -80,16 +112,18 @@ public class PostService {
             postToModify.getUsersThatLiked().add(user);
         }
 
-        this.postRepository.save(postToModify);
-        return postToModify;
+        postRepository.save(postToModify);
+        return PostMapper.FromEntityToDTO(postToModify);
     }
 
-    public PostEntity deletePost(Long postId) throws PostNotFound {
+    public PostReturnDTO deletePost(Long postId) throws PostNotFound {
         Optional<PostEntity> postQuery = this.postRepository.findById(postId);
+        
         if (postQuery.isEmpty()) {
             throw new PostNotFound();
         }
-        this.postRepository.delete(postQuery.get());
-        return postQuery.get();
+
+        postRepository.delete(postQuery.get());
+        return PostMapper.FromEntityToDTO(postQuery.get());
     }
 }

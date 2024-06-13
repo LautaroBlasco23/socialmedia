@@ -1,5 +1,6 @@
 package socialmedia.backend.user.userProfile.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import socialmedia.backend.user.userAuth.entity.UserAuthEntity;
 import socialmedia.backend.user.userProfile.dtos.CreateProfileDTO;
 import socialmedia.backend.user.userProfile.dtos.UpdateProfileDTO;
+import socialmedia.backend.user.userProfile.dtos.UserReturnDTO;
 import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
 import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
+import socialmedia.backend.user.userProfile.mapper.UserProfileMapper;
 import socialmedia.backend.user.userProfile.repository.UserProfileRepository;
 
 @Service
@@ -19,27 +22,55 @@ public class UserProfileService {
     
     private final UserProfileRepository userProfileRepository;
 
-    public List<UserProfileEntity> getAllProfiles() {
-        return this.userProfileRepository.findAll();
+    public List<UserReturnDTO> getAllProfiles() {
+        List<UserProfileEntity> listOfUsers = userProfileRepository.findAll();
+
+        List<UserReturnDTO> returnList = new ArrayList<>();
+        for (UserProfileEntity user: listOfUsers) {
+            returnList.add(UserProfileMapper.fromEntityToDTO(user));
+        }
+
+        return returnList;
     }
 
-    public UserProfileEntity getProfileById(Long profileId) throws UserNotFoundException {
-        Optional<UserProfileEntity> userQuery = this.userProfileRepository.findById(profileId);
+    public UserReturnDTO getProfileById(Long profileId) throws UserNotFoundException {
+        Optional<UserProfileEntity> userQuery = userProfileRepository.findById(profileId);
         if (userQuery.isEmpty()) {
             throw new UserNotFoundException();
         }
-        return userQuery.get();
+
+        UserReturnDTO user = UserProfileMapper.fromEntityToDTO(userQuery.get());
+
+        return user;
     }
 
-    public UserProfileEntity createProfile(CreateProfileDTO profileData) {
+    public UserReturnDTO createProfile(CreateProfileDTO profileData) {
         UserProfileEntity newProfile = UserProfileEntity.builder()
             .firstname(profileData.getFirstname())
             .lastname(profileData.getLastname())
             .build();
+        newProfile = userProfileRepository.save(newProfile);
+        UserReturnDTO user = UserProfileMapper.fromEntityToDTO(newProfile); 
 
-        this.userProfileRepository.save(newProfile);
+        return user;
+    }
 
-        return newProfile;
+    public UserReturnDTO modifyProfile(Long profileId, UpdateProfileDTO profileData) throws UserNotFoundException {
+        Optional<UserProfileEntity> userQuery = userProfileRepository.findById(profileId);
+
+        if (userQuery.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        UserProfileEntity modifiedUser = userQuery.get();
+
+        modifiedUser.setFirstname(profileData.getFirstname());
+        modifiedUser.setLastname(profileData.getLastname());
+
+        modifiedUser = userProfileRepository.save(modifiedUser);
+        UserReturnDTO user = UserProfileMapper.fromEntityToDTO(modifiedUser);
+
+        return user;
     }
 
     public UserProfileEntity createDefaultProfile(UserAuthEntity userAuth) {
@@ -54,25 +85,8 @@ public class UserProfileService {
             .lastname("default")
             .build();
 
-        this.userProfileRepository.save(newProfile);
+        userProfileRepository.save(newProfile);
 
         return newProfile;
-    }
-
-    public UserProfileEntity modifyProfile(Long profileId, UpdateProfileDTO profileData) throws UserNotFoundException {
-        Optional<UserProfileEntity> userQuery = this.userProfileRepository.findById(profileId);
-
-        if (userQuery.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        UserProfileEntity modifiedUser = userQuery.get();
-
-        modifiedUser.setFirstname(profileData.getFirstname());
-        modifiedUser.setLastname(profileData.getLastname());
-
-        this.userProfileRepository.save(modifiedUser);
-
-        return modifiedUser;
     }
 }

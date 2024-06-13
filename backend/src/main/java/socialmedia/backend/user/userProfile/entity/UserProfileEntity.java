@@ -3,8 +3,6 @@ package socialmedia.backend.user.userProfile.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,28 +45,46 @@ public class UserProfileEntity {
     @Column(nullable = false)
     private String lastname;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     private List<PostEntity> userPosts;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     private List<CommentEntity> userComments;
 
-    @JsonIgnore
+    // User follows and followers
+
     @ManyToMany
     @JoinTable(name = "user_following",
-               joinColumns = @JoinColumn(name = "follower_id"),
-               inverseJoinColumns = @JoinColumn(name = "followed_id"))
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "following_id")
+    )
     private List<UserProfileEntity> following;
 
-    @JsonIgnore
     @ManyToMany
+    @JoinTable(name = "user_following",
+        joinColumns = @JoinColumn(name = "following_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<UserProfileEntity> followers;
+
+
+    // User likes:
+
+    @ManyToMany
+    @JoinTable(
+        name = "posts_likes",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "post_id")
+    )
     private List<PostEntity> likedPosts;
 
-    @JsonIgnore
     @ManyToMany
-    private List<CommentEntity> likedComments;
+    @JoinTable(
+        name = "comments_likes",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "comment_id")
+    )
+private List<CommentEntity> likedComments;
 
     public static UserProfileEntity defaultBuild() {
         return UserProfileEntity.builder()
@@ -80,9 +96,5 @@ public class UserProfileEntity {
             .likedPosts(new ArrayList<>())
             .likedComments(new ArrayList<>())
             .build();
-    }
-
-    public Long getId() {
-        return this.auth.getId();
     }
 }

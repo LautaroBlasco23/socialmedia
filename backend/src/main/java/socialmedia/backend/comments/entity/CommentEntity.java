@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,7 +18,6 @@ import socialmedia.backend.posts.entity.PostEntity;
 import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
 
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "comments")
@@ -31,22 +31,26 @@ public class CommentEntity {
     private Long id;
     
     private String text;
+    
+    private boolean isReply;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserProfileEntity user;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", referencedColumnName = "id")
     private PostEntity post;
 
-    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "comments_likes",
+        joinColumns = @JoinColumn(name = "comment_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
     private Set<UserProfileEntity> likes;
 
-    @JsonIgnore
-    @ManyToMany(fetch = FetchType.LAZY)
-    private Set<CommentEntity> replies;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private CommentEntity parentComment;
 }

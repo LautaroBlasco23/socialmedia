@@ -1,7 +1,5 @@
 package socialmedia.backend.posts.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,9 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import socialmedia.backend.posts.dtos.CreatePostDTO;
 import socialmedia.backend.posts.dtos.PostReturnDTO;
-import socialmedia.backend.posts.entity.PostEntity;
 import socialmedia.backend.posts.exceptions.PostNotFound;
-import socialmedia.backend.posts.mapper.PostMapper;
 import socialmedia.backend.posts.service.PostService;
 import socialmedia.backend.security.jwt.JwtTokenUtils;
 import socialmedia.backend.user.userProfile.exceptions.UserNotFoundException;
@@ -40,10 +36,7 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<?> getSpecificPost(@PathVariable Long postId) {
         try {
-            PostEntity postEntity = this.postService.getPostById(postId);
-            PostReturnDTO postReturn = PostMapper.FromEntityToDTO(postEntity);
-
-            return ResponseEntity.ok(postReturn);
+            return ResponseEntity.ok(this.postService.getPostById(postId));
         } catch (PostNotFound e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("post not found");
         } catch (Exception e ) {
@@ -55,8 +48,7 @@ public class PostController {
     // add user not found exception.
     public ResponseEntity<?> getUserPosts(@PathVariable Long userId) {
         try {
-            List<PostEntity> listOfPosts = this.postService.getAlllUserPosts(userId);
-            return ResponseEntity.ok(listOfPosts);
+            return ResponseEntity.ok(this.postService.getAllUserPosts(userId));
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -66,8 +58,7 @@ public class PostController {
     public ResponseEntity<?> createPost(@RequestBody CreatePostDTO postData, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
-            PostEntity newPost = this.postService.createNewPost(postData, userId);
-            return ResponseEntity.ok(newPost);
+            return ResponseEntity.ok(this.postService.createNewPost(postData, userId));
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -77,7 +68,7 @@ public class PostController {
     public ResponseEntity<?> likePost(@PathVariable Long postId, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
-            PostEntity likedPost = this.postService.likePost(postId, userId);
+            PostReturnDTO likedPost = this.postService.likePost(postId, userId);
             return ResponseEntity.ok(likedPost);            
         } catch (UserNotFoundException e) {
             return ResponseEntity.badRequest().body("invalid token, user not found");
@@ -90,11 +81,12 @@ public class PostController {
     public ResponseEntity<?> modifyPost(@PathVariable Long postId, @RequestBody CreatePostDTO postData, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
-            PostEntity post = this.postService.getPostById(postId);
-            if (post.getUser().getId() != userId) {
+            PostReturnDTO post = this.postService.getPostById(postId);
+            if (post.getUserId() != userId) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("you can't edit this post");
             }
-            PostEntity modifiedPost = this.postService.modifyTextInPost(postId, postData);
+
+            PostReturnDTO modifiedPost = this.postService.modifyTextInPost(postId, postData);
             return ResponseEntity.ok(modifiedPost);
         } catch (PostNotFound e) {
             return ResponseEntity.notFound().build();
@@ -106,11 +98,11 @@ public class PostController {
     public ResponseEntity<?> deletePost(@PathVariable Long postId, HttpServletRequest request) {
         try {
             Long userId = this.jwtTokenUtils.getUserIdFromRequest(request);
-            PostEntity post = this.postService.getPostById(postId);
-            if (post.getUser().getId() != userId) {
+            PostReturnDTO post = this.postService.getPostById(postId);
+            if (post.getUserId() != userId) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("you can't edit this post");
             }
-            PostEntity modifiedPost = this.postService.deletePost(postId);
+            PostReturnDTO modifiedPost = this.postService.deletePost(postId);
             return ResponseEntity.ok(modifiedPost);
         } catch (PostNotFound e) {
             return ResponseEntity.notFound().build();

@@ -13,4 +13,5 @@ import socialmedia.backend.user.userProfile.entity.UserProfileEntity;
 public interface CommentRepository extends JpaRepository<CommentEntity, Long> {
     List<CommentEntity> findByUser(UserProfileEntity authorId);
     List<CommentEntity> findByPost(PostEntity post);
+    List<CommentEntity> findByParentComment(CommentEntity parentComment);
 }
